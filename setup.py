@@ -28,7 +28,7 @@ classifiers = ['Development Status :: 3 - Alpha',
                'Topic :: Software Development :: Libraries']
 
 setuptools.setup(name='email-normalize',
-                 version='0.1.0',
+                 version='0.1.1',
                  description=('Normalize email addresses, removing ISP '
                               'specific markup'),
                  long_description=open('README.rst').read(),

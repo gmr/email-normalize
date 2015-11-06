@@ -24,7 +24,7 @@ from dns import resolver
 
 LOGGER = logging.getLogger(__name__)
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 FASTMAIL_DOMAINS = set(['fastmail.com', 'messagingengine.com', 'fastmail.fm'])
 GMAIL_DOMAINS = set(['google.com', 'googlemail.com', 'gmail.com'])
@@ -43,7 +43,7 @@ def _get_mx_exchanges(domain):
         answer = resolver.query(domain, 'MX')
         return [str(record.exchange).lower()[:-1] for record in answer]
     except (resolver.NoAnswer, resolver.NoNameservers, resolver.NotAbsolute,
-            resolver.NoRootSOA, resolver.NXDOMAIN) as error:
+            resolver.NoRootSOA, resolver.NXDOMAIN, resolver.Timeout) as error:
         LOGGER.error('Error querying MX for %s: %r', domain, error)
         return []
 
