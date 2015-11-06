@@ -4,7 +4,7 @@ Return a normalized email-address stripping ISP specific behaviors such as
 "Plus addressing" (``foo+bar@gmail.com``). It will also parse out addresses that
 are in the ``"Real Name" <address>`` format.
 
-|Version| |Downloads| |Status| |Coverage| |License|
+|Version| |Downloads| |Status| |Coverage| |CodeClimate| |License|
 
 License
 -------
@@ -36,5 +36,8 @@ Example
 .. |Downloads| image:: https://img.shields.io/pypi/dm/email-normalize.svg?
    :target: https://pypi.python.org/pypi/email-normalize
 
-.. |License| image:: https://img.shields.io/pypi/l/email-normalize.svg?
+.. |License| image:: https://img.shields.io/github/license/gmr/email-normalize.svg?
    :target: https://github.com/gmr/email-normalize
+
+.. |Codecov| image:: https://img.shields.io/codeclimate/github/gmr/email-normalize.svg?
+   :target: https://codeclimate.com/github/gmr/email-normalize
