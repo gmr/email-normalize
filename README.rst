@@ -39,5 +39,5 @@ Example
 .. |License| image:: https://img.shields.io/github/license/gmr/email-normalize.svg?
    :target: https://github.com/gmr/email-normalize
 
-.. |Codecov| image:: https://img.shields.io/codeclimate/github/gmr/email-normalize.svg?
+.. |CodeClimate| image:: https://img.shields.io/codeclimate/github/gmr/email-normalize.svg?
    :target: https://codeclimate.com/github/gmr/email-normalize
