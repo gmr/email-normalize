@@ -32,6 +32,10 @@ class GMailTests(unittest.TestCase):
         self.assertEqual(normalize('gavin.r+123@aweber.net'),
                          'gavinr@aweber.net')
 
+    def test_no_resolution(self):
+        self.assertEqual(normalize('"Me!" <gavin.m.roy+123@gmail.com>', False),
+                         'gavinmroy@gmail.com')
+
 
 class MicrosoftTests(unittest.TestCase):
 
