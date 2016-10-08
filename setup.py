@@ -6,10 +6,7 @@ if sys.version_info < (2, 7, 0):
     tests_require.append('unittest2')
 
 requirements = []
-if sys.version_info < (3, 0, 0):
-    requirements.append('dnspython>=1.12.0,<2.0')
-else:
-    requirements.append('dnspython3>=1.12.0,<2.0')
+requirements.append('dnspython>=1.13.0,<2.0')
 
 classifiers = ['Development Status :: 3 - Alpha',
                'Intended Audience :: Developers',
