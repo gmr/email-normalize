@@ -24,7 +24,7 @@ from dns import resolver
 
 LOGGER = logging.getLogger(__name__)
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 FASTMAIL_DOMAINS = set(['fastmail.com', 'messagingengine.com', 'fastmail.fm'])
 GMAIL_DOMAINS = set(['google.com', 'googlemail.com', 'gmail.com'])

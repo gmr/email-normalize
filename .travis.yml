@@ -9,20 +9,17 @@ python:
   - 3.5
 install:
   - python setup.py develop
-  - pip install -r test-requirements.txt --download-cache $HOME/.pip-cache
+  - pip install -r test-requirements.txt
 script: nosetests
 after_success:
   - codecov
 deploy:
-  distributions: sdist
+  distributions: bdist_wheel
   provider: pypi
   user: crad
   on:
-    python: 2.7
+    python: 3.5
     tags: true
     all_branches: true
   password:
     secure: "CCOY0tWX6qufbokhuEthVaed8Ml4TymPiK9IoCKi42q0XPxTg3WA1m6MFMVXFtIdQW6vabwgn1usLPclWbE6nKIn4Dn5vl4S9GrJtIj6sL+6g4hxQyWNhOKvA7uxnBJrrTFv5JUNHh28YhYBWuxnm+cRYrjv6LiNr57e6b5KuxJsi63Skr4LLr4EtQm84svm3h5sWseS+6/VYOvULooh/WLv7wf+TqFqnuYuxUtr4gqu9REdAOvlejpi78IYnx8OE/UpNWdg/We8abq5QbJy31lGrlDQMIiqvYab6QL31GlTu7QgjzXrSk1EC1e6gxBCm35sbxLFU3bt5lnze44p9l9siNzVRTre5aHBzOihonz7K01fXekohGgbXmZrB5M6Ilb0P9M7c4lIGMoTA5lm9mGtUeoNpmuzjtaQK6u0uNy2xFEjVmgsjmrljCB51Usah7mi7YdBIiNPknTB1v5NsGdifl4P6sTrkGwyAUTCIg9fsmswgcNr90Tn2GlkC8NaY2PjAnSbdIT6YCmNrVvxKxk2aC70tOi7T8C9XWxzsnOa+tscguimFHwj6nIPf6QWDmcXR4lrtvcrqIUgYT7QF5qsTPzJcAFXay5aOL+OXQw3S6mDvtK9YGvSRcSULM7HPxxirOQhbNnnyD5MF4dd20VZX0WtlcOfEp3Vk019N9A="
-cache:
-  directories:
-    - $HOME/.pip-cache/

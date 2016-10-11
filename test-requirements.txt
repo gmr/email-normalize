@@ -2,3 +2,4 @@ nose
 mock
 coverage
 codecov
+wheel

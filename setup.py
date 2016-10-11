@@ -8,7 +8,7 @@ if sys.version_info < (2, 7, 0):
 requirements = []
 requirements.append('dnspython>=1.13.0,<2.0')
 
-classifiers = ['Development Status :: 3 - Alpha',
+classifiers = ['Development Status :: 4 - Beta',
                'Intended Audience :: Developers',
                'License :: OSI Approved :: BSD License',
                'Operating System :: OS Independent',
@@ -25,7 +25,7 @@ classifiers = ['Development Status :: 3 - Alpha',
                'Topic :: Software Development :: Libraries']
 
 setuptools.setup(name='email-normalize',
-                 version='0.2.0',
+                 version='0.2.1',
                  description=('Normalize email addresses, removing ISP '
                               'specific markup'),
                  long_description=open('README.rst').read(),
