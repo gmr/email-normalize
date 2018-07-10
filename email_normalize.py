@@ -19,8 +19,8 @@ Example
 """
 import logging
 from email import utils
-
 from dns import resolver
+from functools import lru_cache
 
 LOGGER = logging.getLogger(__name__)
 
@@ -30,8 +30,9 @@ FASTMAIL_DOMAINS = set(['fastmail.com', 'messagingengine.com', 'fastmail.fm'])
 GMAIL_DOMAINS = set(['google.com', 'googlemail.com', 'gmail.com'])
 MICROSOFT_DOMAINS = set(['hotmail.com', 'outlook.com', 'live.com'])
 YAHOO_DOMAINS = set(['yahoodns.net', 'yahoo.com', 'ymail.com'])
+CACHE_LOOKUPS = 255
 
-
+@lru_cache(CACHE_LOOKUPS)
 def _get_mx_exchanges(domain):
     """Fetch the MX records for the specified domain
 
