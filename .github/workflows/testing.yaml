@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@v1
 
       - name: Install OS dependencies
-        run: apk --update add gcc make musl-dev linux-headers
+        run: apk --update add gcc libffi-dev linux-headers make musl-dev
 
       - name: Install testing dependencies
         run: pip3 --no-cache-dir install -e '.[testing]'
