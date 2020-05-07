@@ -6,9 +6,9 @@ import os
 import time
 import unittest
 import uuid
-from unittest import mock
 
 import aiodns
+from asynctest import mock
 
 import email_normalize
 

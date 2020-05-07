@@ -2,7 +2,8 @@ import typing
 import unittest
 import uuid
 import warnings
-from unittest import mock
+
+from asynctest import mock
 
 import email_normalize
 
