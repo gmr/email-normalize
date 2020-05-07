@@ -49,7 +49,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Python Versions Supported
 -------------------------
-3.6+
+3.7+
 
 .. |Version| image:: https://img.shields.io/pypi/v/email-normalize.svg?
    :target: https://pypi.python.org/pypi/email-normalize
