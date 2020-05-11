@@ -11,7 +11,7 @@ class. Both use Python's :py:mod:`asyncio` library.
 The :func:`~email_normalize.normalize` function is intended for
 use in non-async applications and the :class:`~email_normalize.Normalizer` is
 intended for async applications. :func:`~email_normalize.normalize` uses
-:class:`~email_normalize.Normalizer` under the covers.
+:class:`~email_normalize.Normalizer` under the hood.
 
 Documentation
 -------------
