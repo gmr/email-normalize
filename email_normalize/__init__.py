@@ -1,6 +1,7 @@
 """
 email-normalize
 ===============
+
 Library for returning a normalized email-address stripping mailbox provider
 specific behaviors such as "Plus addressing" (foo+bar@gmail.com).
 
@@ -42,26 +43,85 @@ class CachedItem:
 
 @dataclasses.dataclass(frozen=True)
 class Result:
-    """Normalization Result
+    """Instances of the :class:`~email_normalize.Result` class contain data
+    from the email normalization process.
 
-    :attr address: The address that was normalized
-    :attr normalized_address: The normalized version of the address
-    :attr mx_records: A list of tuples representing the priority and host of
+    :param address: The address that was normalized
+    :type address: str
+    :param normalized_address: The normalized version of the address
+    :type normalized_address: str
+    :param mx_records: A list of tuples representing the priority and host of
         the MX records found for the email address. If empty, indicates a
         failure to lookup the domain part of the email address.
-    :attr mailbox_provider: String that represents the mailbox provider name
+    :type mx_records: :data:`~email_normalize.MXRecords`
+    :param mailbox_provider: String that represents the mailbox provider name
         - is `None` if the mailbox provider could not be detected or
         was unsupported.
+    :type mailbox_provider: str
+
+    .. note:: If during the normalization process the MX records could not be
+        resolved, the ``mx_records`` attribute will be an empty :class:`list`
+        and the ``mailbox_provider`` attribute will be :data:`None`.
+
+    **Example**
+
+    .. code-block:: python
+
+        @dataclasses.dataclass(frozen=True)
+        class Result:
+            address = 'Gavin.M.Roy+ignore-spam@gmail.com'
+            normalized_address = 'gavinmroy@gmail.com'
+            mx_records =     [
+                (5, 'gmail-smtp-in.l.google.com'),
+                (10, 'alt1.gmail-smtp-in.l.google.com'),
+                (20, 'alt2.gmail-smtp-in.l.google.com'),
+                (30, 'alt3.gmail-smtp-in.l.google.com'),
+                (40, 'alt4.gmail-smtp-in.l.google.com')
+            ]
+            mailbox_provider = 'Gmail'
 
     """
     address: str
     normalized_address: str
-    mx_records: typing.List[typing.Tuple[int, str]]
+    mx_records: MXRecords
     mailbox_provider: typing.Optional[str] = None
 
 
 class Normalizer:
+    """Singleton class for normalizing an email address and resolving MX
+    records.
 
+    Normalization is processed by splitting the local and domain parts of the
+    email address and then performing DNS resolution for the MX records
+    associated with the domain part of the address. The MX records are
+    processed against a set of mailbox provider specific rules. If a match
+    is found for the MX record hosts, the rules are applied to the email
+    address.
+
+    This class implements a least frequent recently used cache that respects
+    the DNS TTL returned when performing MX lookups.
+
+    **Usage Example**
+
+    .. code-block:: python
+
+        async def normalize(email_address: str) -> email_normalize.Result:
+            normalizer = email_normalize.Normalizer()
+            return await normalizer.normalize('foo@bar.io')
+
+    :param name_servers: Optional list of hostnames to use for DNS resolution
+    :type name_servers: list(str) or None
+    :param int cache_limit: The maximum number of domain results that are
+        cached. Defaults to `1024`.
+
+    :param bool cache_failures: Toggle the behavior of caching DNS resolution
+        failures for a given domain. When enabled, failures will be cached
+        for `failure_ttl` seconds. Defaults to `True`.
+    :param int failure_ttl: Duration in seconds to cache DNS failures. Only
+        works when `cache_failures` is set to `True`. Defaults to `300`
+        seconds.
+
+    """
     _instance = None
 
     def __new__(cls,
@@ -84,6 +144,8 @@ class Normalizer:
         MX priority and value.
 
         :param domain_part: The domain to resolve MX records for
+        :type domain_part: str
+        :rtype:  :data:`~email_normalize.MXRecords`
 
         """
         if self._skip_cache(domain_part):
@@ -112,10 +174,16 @@ class Normalizer:
         return copy.deepcopy(self.cache[domain_part].mx_records)
 
     async def normalize(self, email_address: str) -> Result:
-        """Return the normalized email address, removing
+        """Return a :class:`~email_normalize.Result` instance containing the
+        original address, the normalized address, the MX records found, and
+        the detected mailbox provider.
+
+        .. note:: If the MX records could not be resolved, the ``mx_records``
+            attribute of the result will be an empty :class:`list` and the
+            ``mailbox_provider`` will be :data:`None`.
 
         :param email_address: The address to normalize
-        :returns: A :class:`~email_normalize.Result` instance
+        :rtype: :class:`~email_normalize.Result`
 
         """
         address = utils.parseaddr(email_address)
@@ -165,13 +233,24 @@ class Normalizer:
 def normalize(email_address: str) -> Result:
     """Normalize an email address
 
-    This method abstracts the asyncio base for this library and provides
-    a blocking function. If you intend to use this library as part of
-    an asyncio based application, it is recommended that you use the
-    :meth:`~email_normalize.Normalizer.normalize` instead.
+    This method abstracts the :py:mod:`asyncio` base for this library and
+    provides a blocking function. If you intend to use this library as part of
+    an :py:mod:`asyncio` based application, it is recommended that you use
+    the :meth:`~email_normalize.Normalizer.normalize` instead.
+
+    .. note:: If the MX records could not be resolved, the ``mx_records``
+        attribute of the result will be an empty :class:`list` and the
+        ``mailbox_provider`` attribute will be :data:`None`.
+
+    **Usage Example**
+
+    .. code-block:: python
+
+        import email_normalize
+
+        result = email_normalize.normalize('foo@bar.io')
 
     :param email_address: The address to normalize
-    :returns: A :class:`~email_normalize.Result` instance
 
     """
     loop = asyncio.get_event_loop()
