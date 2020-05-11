@@ -6,13 +6,13 @@ MXRecords Type
     A typing alias for list of tuples containing the priority and host name for
     each record returned during the MX lookup.
 
-    .. code-block::
+    .. code-block:: python
 
         typing.List[typing.Tuple[int, str]]
 
 **Example**
 
-.. code-block::
+.. code-block:: python
 
     [
         (5, 'gmail-smtp-in.l.google.com'),
