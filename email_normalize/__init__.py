@@ -233,9 +233,9 @@ class Normalizer:
 def normalize(email_address: str) -> Result:
     """Normalize an email address
 
-    This method abstracts the :py:mod:`asyncio` base for this library and
+    This method abstracts the :mod:`asyncio` base for this library and
     provides a blocking function. If you intend to use this library as part of
-    an :py:mod:`asyncio` based application, it is recommended that you use
+    an :mod:`asyncio` based application, it is recommended that you use
     the :meth:`~email_normalize.Normalizer.normalize` instead.
 
     .. note:: If the MX records could not be resolved, the ``mx_records``
