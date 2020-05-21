@@ -110,6 +110,15 @@ class NormalizerTestCase(AsyncTestCase):
             self.normalizer.cache['gmail.com'].cached_at, cached_at)
 
     @async_test
+    async def test_empty_mx_list(self):
+        with mock.patch.object(self.normalizer, 'mx_records') as mx_records:
+            mx_records.return_value = []
+            result = await self.normalizer.normalize('foo@bar.com')
+            self.assertEqual(result.normalized_address, 'foo@bar.com')
+            self.assertIsNone(result.mailbox_provider)
+            self.assertListEqual(result.mx_records, [])
+
+    @async_test
     async def test_failure_cached(self):
         key = str(uuid.uuid4())
         records = await self.normalizer.mx_records(key)
