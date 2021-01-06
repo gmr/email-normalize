@@ -24,6 +24,8 @@ LOGGER = logging.getLogger(__name__)
 
 MXRecords = typing.List[typing.Tuple[int, str]]
 
+cache: typing.Dict[str, 'CachedItem'] = {}
+
 
 class CachedItem:
     """Used to represent a cached lookup for implementing a LFRU cache"""
@@ -88,8 +90,7 @@ class Result:
 
 
 class Normalizer:
-    """Singleton class for normalizing an email address and resolving MX
-    records.
+    """Class for normalizing an email address and resolving MX records.
 
     Normalization is processed by splitting the local and domain parts of the
     email address and then performing DNS resolution for the MX records
@@ -99,7 +100,8 @@ class Normalizer:
     address.
 
     This class implements a least frequent recently used cache that respects
-    the DNS TTL returned when performing MX lookups.
+    the DNS TTL returned when performing MX lookups. Data is cached at the
+    **module** level.
 
     **Usage Example**
 
@@ -122,22 +124,16 @@ class Normalizer:
         seconds.
 
     """
-    _instance = None
 
-    def __new__(cls,
-                name_servers: typing.Optional[typing.List[str]] = None,
-                cache_limit: int = 1024,
-                cache_failures: bool = True,
-                failure_ttl: int = 300) \
-            -> 'Normalizer':
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._resolver = aiodns.DNSResolver(name_servers)
-        cls.cache: typing.Dict[str, CachedItem] = {}
-        cls.cache_failures = cache_failures
-        cls.cache_limit = cache_limit
-        cls.failure_ttl = failure_ttl
-        return cls._instance
+    def __init__(self,
+                 name_servers: typing.Optional[typing.List[str]] = None,
+                 cache_limit: int = 1024,
+                 cache_failures: bool = True,
+                 failure_ttl: int = 300) -> 'Normalizer':
+        self._resolver = aiodns.DNSResolver(name_servers)
+        self.cache_failures = cache_failures
+        self.cache_limit = cache_limit
+        self.failure_ttl = failure_ttl
 
     async def mx_records(self, domain_part: str) -> MXRecords:
         """Resolve MX records for a domain returning a list of tuples with the
@@ -161,18 +157,20 @@ class Normalizer:
                 ttl = min(r.ttl for r in records) \
                     if records else self.failure_ttl
 
-            # Prune the cache if it's >= the limit, finding least used, oldest
-            if len(self.cache.keys()) >= self.cache_limit:
-                del self.cache[sorted(
-                    self.cache.items(),
-                    key=lambda i: (i[1].hits, i[1].last_access))[0][0]]
+            # Prune the cache if over the limit, finding least used, oldest
+            if len(cache.keys()) >= self.cache_limit:
+                key_to_prune = sorted(
+                    cache.items(), key=lambda i: (
+                        i[1].hits, i[1].last_access))[0][0]
+                LOGGER.debug('Pruning cache of %s', key_to_prune)
+                del cache[key_to_prune]
 
-            self.cache[domain_part] = CachedItem(
+            cache[domain_part] = CachedItem(
                 sorted(mx_records, key=operator.itemgetter(0, 1)), ttl)
 
-        self.cache[domain_part].hits += 1
-        self.cache[domain_part].last_access = time.monotonic()
-        return copy.deepcopy(self.cache[domain_part].mx_records)
+        cache[domain_part].hits += 1
+        cache[domain_part].last_access = time.monotonic()
+        return copy.deepcopy(cache[domain_part].mx_records)
 
     async def normalize(self, email_address: str) -> Result:
         """Return a :class:`~email_normalize.Result` instance containing the
@@ -223,10 +221,10 @@ class Normalizer:
                         return provider
 
     def _skip_cache(self, domain: str) -> bool:
-        if domain not in self.cache:
+        if domain not in cache:
             return True
-        elif self.cache[domain].expired:
-            del self.cache[domain]
+        elif cache[domain].expired:
+            del cache[domain]
             return True
         return False
 
