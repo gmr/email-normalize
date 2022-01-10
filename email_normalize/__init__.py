@@ -215,9 +215,10 @@ class Normalizer:
     def _lookup_provider(mx_records: typing.List[typing.Tuple[int, str]]) \
             -> typing.Optional[providers.MailboxProvider]:
         for priority, host in mx_records:
+            lchost = host.lower();
             for provider in providers.Providers:
                 for domain in provider.MXDomains:
-                    if host.endswith(domain):
+                    if lchost.endswith(domain):
                         return provider
 
     def _skip_cache(self, domain: str) -> bool:

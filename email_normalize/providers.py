@@ -36,7 +36,7 @@ class Fastmail(MailboxProvider):
 
 class Google(MailboxProvider):
     Flags: Rules = Rules.PLUS_ADDRESSING ^ Rules.STRIP_PERIODS
-    MXDomains: typing.Set[str] = {'google.com'}
+    MXDomains: typing.Set[str] = {'google.com', 'googlemail.com'}
 
 
 class Microsoft(MailboxProvider):
