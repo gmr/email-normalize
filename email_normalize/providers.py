@@ -55,7 +55,7 @@ class Rackspace(MailboxProvider):
 
 
 class Yahoo(MailboxProvider):
-    Flags: Rules = Rules.DASH_ADDRESSING ^ Rules.STRIP_PERIODS
+    Flags: Rules = Rules.DASH_ADDRESSING
     MXDomains: typing.Set[str] = {'yahoodns.net'}
 
 
