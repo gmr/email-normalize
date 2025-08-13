@@ -22,6 +22,7 @@ Documentation
    normalizer
    mxrecords
    result
+   history
 
 Currently Supported Mailbox Providers
 -------------------------------------
