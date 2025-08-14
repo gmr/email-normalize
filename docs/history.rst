@@ -5,6 +5,7 @@ Release History
 -----
 - FIXED: Multi-segment TLD normalization using tldextract library
 - FIXED: Fastmail subdomain parsing for domains like .co.uk, .com.au
+- FIXED: Cache entires expiring immediately if aiodns returned invalid TTL
 
 2.0.0
 -----

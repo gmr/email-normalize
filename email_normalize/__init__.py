@@ -155,8 +155,7 @@ class Normalizer:
                 mx_records, ttl = [], self.failure_ttl
             else:
                 mx_records = [(r.priority, r.host) for r in records]
-                ttl = min(r.ttl for r in records) \
-                    if records else self.failure_ttl
+                ttl = min((r.ttl for r in records if r.ttl >= 0), default=self.failure_ttl)
 
             # Prune the cache if over the limit, finding least used, oldest
             if len(cache.keys()) >= self.cache_limit:
