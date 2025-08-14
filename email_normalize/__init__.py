@@ -13,6 +13,7 @@ import logging
 import operator
 import time
 import typing
+import tldextract
 from email import utils
 
 import aiodns
@@ -154,8 +155,7 @@ class Normalizer:
                 mx_records, ttl = [], self.failure_ttl
             else:
                 mx_records = [(r.priority, r.host) for r in records]
-                ttl = min(r.ttl for r in records) \
-                    if records else self.failure_ttl
+                ttl = min((r.ttl for r in records if r.ttl >= 0), default=self.failure_ttl)
 
             # Prune the cache if over the limit, finding least used, oldest
             if len(cache.keys()) >= self.cache_limit:
@@ -205,10 +205,30 @@ class Normalizer:
     @staticmethod
     def _local_part_as_hostname(local_part: str,
                                 domain_part: str) -> typing.Tuple[str, str]:
-        domain_segments = domain_part.split('.')
-        if len(domain_segments) > 2:
-            local_part = domain_segments[0]
-            domain_part = '.'.join(domain_segments[1:])
+        # Use tldextract to properly parse the domain
+        extracted = tldextract.extract(domain_part)
+
+        # If there's a subdomain, use the first part of the subdomain as the local part
+        # and the rest (domain + suffix) as the domain part
+        if extracted.subdomain:
+            subdomain_parts = extracted.subdomain.split('.')
+            local_part = subdomain_parts[0]
+
+            # Reconstruct domain_part: remaining subdomain parts + domain + suffix
+            remaining_subdomain = '.'.join(subdomain_parts[1:]) if len(subdomain_parts) > 1 else ''
+            domain_name = extracted.domain
+            suffix = extracted.suffix
+
+            # Build the new domain part
+            domain_part_components = []
+            if remaining_subdomain:
+                domain_part_components.append(remaining_subdomain)
+            if domain_name:
+                domain_part_components.append(domain_name)
+            if suffix:
+                domain_part_components.append(suffix)
+
+            domain_part = '.'.join(domain_part_components)
         return local_part, domain_part
 
     @staticmethod

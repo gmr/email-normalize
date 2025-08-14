@@ -70,6 +70,49 @@ class MailboxProviderTestCase(TestCase):
             address, '{}@{}'.format(local_part, domain_part),
             mx_records, 'Fastmail')
 
+    def test_fastmail_multi_segment_tld_no_subdomain(self):
+        """Test that domains with multi-segment TLDs but no subdomain are not modified."""
+        local_part = str(uuid.uuid4())
+        domain_part = '{}.co.uk'.format(uuid.uuid4())
+        address = '{}@{}'.format(local_part, domain_part)
+        mx_records = [(10, 'in1-smtp.messagingengine.com')]
+        self._perform_test(
+            address, '{}@{}'.format(local_part, domain_part),
+            mx_records, 'Fastmail')
+
+    def test_fastmail_multi_segment_tld_with_subdomain(self):
+        """Test that domains with multi-segment TLDs and subdomains are correctly normalized."""
+        local_part = str(uuid.uuid4())
+        domain_part = '{}.com.au'.format(uuid.uuid4())
+        address = 'testing@{}.{}'.format(local_part, domain_part)
+        mx_records = [(10, 'in1-smtp.messagingengine.com')]
+        self._perform_test(
+            address, '{}@{}'.format(local_part, domain_part),
+            mx_records, 'Fastmail')
+
+    def test_fastmail_complex_multi_segment_tld(self):
+        """Test complex case with multiple subdomains and multi-segment TLD."""
+        local_part = str(uuid.uuid4())
+        subdomain_part = str(uuid.uuid4())
+        domain_part = '{}.org.uk'.format(uuid.uuid4())
+        address = 'testing@{}.{}.{}'.format(local_part, subdomain_part, domain_part)
+        mx_records = [(10, 'in1-smtp.messagingengine.com')]
+        self._perform_test(
+            address, '{}@{}.{}'.format(local_part, subdomain_part, domain_part),
+            mx_records, 'Fastmail')
+
+    def test_fastmail_deep_subdomain_single_tld(self):
+        """Test deep subdomain structure with single TLD."""
+        local_part = str(uuid.uuid4())
+        subdomain1 = str(uuid.uuid4())
+        subdomain2 = str(uuid.uuid4())
+        domain_part = '{}.com'.format(uuid.uuid4())
+        address = 'testing@{}.{}.{}.{}'.format(local_part, subdomain1, subdomain2, domain_part)
+        mx_records = [(10, 'in1-smtp.messagingengine.com')]
+        self._perform_test(
+            address, '{}@{}.{}.{}'.format(local_part, subdomain1, subdomain2, domain_part),
+            mx_records, 'Fastmail')
+
     def test_google(self):
         local_part = str(uuid.uuid4()).replace('-', '.')
         domain_part = str(uuid.uuid4())
