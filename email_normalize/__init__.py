@@ -253,6 +253,6 @@ def normalize(email_address: str) -> Result:
     :param email_address: The address to normalize
 
     """
-    loop = asyncio.get_event_loop()
-    normalizer = Normalizer()
-    return loop.run_until_complete(normalizer.normalize(email_address))
+    async def _normalize():
+        return await Normalizer().normalize(email_address)
+    return asyncio.run(_normalize())
