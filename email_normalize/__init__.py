@@ -154,8 +154,8 @@ class Normalizer:
                 mx_records, ttl = [], self.failure_ttl
             else:
                 mx_records = [(r.priority, r.host) for r in records]
-                ttl = min(r.ttl for r in records) \
-                    if records else self.failure_ttl
+                ttl = min((r.ttl for r in records if r.ttl >= 0),
+                          default=self.failure_ttl)
 
             # Prune the cache if over the limit, finding least used, oldest
             if len(cache.keys()) >= self.cache_limit:
@@ -215,7 +215,7 @@ class Normalizer:
     def _lookup_provider(mx_records: typing.List[typing.Tuple[int, str]]) \
             -> typing.Optional[providers.MailboxProvider]:
         for priority, host in mx_records:
-            lchost = host.lower();
+            lchost = host.lower()
             for provider in providers.Providers:
                 for domain in provider.MXDomains:
                     if lchost.endswith(domain):
@@ -253,6 +253,6 @@ def normalize(email_address: str) -> Result:
     :param email_address: The address to normalize
 
     """
-    loop = asyncio.get_event_loop()
-    normalizer = Normalizer()
-    return loop.run_until_complete(normalizer.normalize(email_address))
+    async def _normalize():
+        return await Normalizer().normalize(email_address)
+    return asyncio.run(_normalize())
