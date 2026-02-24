@@ -197,8 +197,6 @@ class Normalizer:
                 local_part = local_part.replace('.', '')
             if provider.Flags & providers.Rules.PLUS_ADDRESSING:
                 local_part = local_part.split('+')[0]
-            if provider.Flags & providers.Rules.DASH_ADDRESSING:
-                local_part = local_part.split('-')[0]
         return Result(email_address, '@'.join([local_part, domain_part]),
                       mx_records, provider.__name__ if provider else None)
 
