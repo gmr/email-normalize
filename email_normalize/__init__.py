@@ -99,8 +99,11 @@ class Normalizer:
         cache_limit: int = 1024,
         cache_failures: bool = True,
         failure_ttl: int = 300,
+        skip_dns: bool = False,
     ) -> None:
-        self._resolver = aiodns.DNSResolver(name_servers)
+        self._skip_dns = skip_dns
+        if not skip_dns:
+            self._resolver = aiodns.DNSResolver(name_servers)
         self.cache_failures = cache_failures
         self.cache_limit = cache_limit
         self.failure_ttl = failure_ttl
@@ -158,8 +161,12 @@ class Normalizer:
         """
         address = utils.parseaddr(email_address)
         local_part, domain_part = address[1].lower().split('@')
-        mx_records = await self.mx_records(domain_part)
-        provider = self._lookup_provider(mx_records)
+        if self._skip_dns:
+            mx_records = []
+            provider = self._lookup_provider_by_domain(domain_part)
+        else:
+            mx_records = await self.mx_records(domain_part)
+            provider = self._lookup_provider(mx_records)
         if provider:
             if provider.Flags & providers.Rules.LOCAL_PART_AS_HOSTNAME:
                 local_part, domain_part = self._local_part_as_hostname(
@@ -201,6 +208,12 @@ class Normalizer:
         return local_part, domain_part
 
     @staticmethod
+    def _lookup_provider_by_domain(
+        domain_part: str,
+    ) -> type[providers.MailboxProvider] | None:
+        return providers.DomainMap.get(domain_part)
+
+    @staticmethod
     def _lookup_provider(
         mx_records: list[tuple[int, str]],
     ) -> providers.MailboxProvider | None:
@@ -221,7 +234,10 @@ class Normalizer:
         return False
 
 
-def normalize(email_address: str) -> Result:
+def normalize(
+    email_address: str,
+    skip_dns: bool = False,
+) -> Result:
     """Normalize an email address.
 
     This function abstracts the asyncio base for this library and
@@ -231,10 +247,14 @@ def normalize(email_address: str) -> Result:
 
     Args:
         email_address: The address to normalize.
+        skip_dns: Skip DNS MX record lookups and use a static
+            domain map to detect well-known mailbox providers.
+            Defaults to ``False``.
 
     """
 
     async def _normalize():
-        return await Normalizer().normalize(email_address)
+        return await Normalizer(
+            skip_dns=skip_dns).normalize(email_address)
 
     return asyncio.run(_normalize())
