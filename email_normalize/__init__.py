@@ -117,6 +117,8 @@ class Normalizer:
             domain_part: The domain to resolve MX records for.
 
         """
+        if self._skip_dns:
+            return []
         if self._skip_cache(domain_part):
             try:
                 records = await self._resolver.query(domain_part, 'MX')
