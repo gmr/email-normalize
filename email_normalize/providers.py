@@ -12,7 +12,7 @@ class Rules(enum.Flag):
     Used to determine how to normalize provider specific email addresses.
 
     """
-    DASH_ADDRESSING = enum.auto()
+    NONE = 0
     PLUS_ADDRESSING = enum.auto()
     LOCAL_PART_AS_HOSTNAME = enum.auto()
     STRIP_PERIODS = enum.auto()
@@ -55,7 +55,10 @@ class Rackspace(MailboxProvider):
 
 
 class Yahoo(MailboxProvider):
-    Flags: Rules = Rules.DASH_ADDRESSING
+    # No normalization rules — Yahoo disposable addresses use the format
+    # nickname-keyword@, where the nickname alone is not a deliverable
+    # address. See https://help.yahoo.com/kb/SLN28815.html
+    Flags: Rules = Rules.NONE
     MXDomains: typing.Set[str] = {'yahoodns.net'}
 
 

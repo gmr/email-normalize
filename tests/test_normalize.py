@@ -111,7 +111,7 @@ class MailboxProviderTestCase(TestCase):
         address = '{}@{}'.format(local_part, domain_part)
         mx_records = [(1, 'mta5.am0.yahoodns.net')]
         self._perform_test(
-            address, '{}@{}'.format(local_part.split('-', 1)[0], domain_part),
+            address, '{}@{}'.format(local_part, domain_part),
             mx_records, 'Yahoo')
 
     def test_yandex(self):

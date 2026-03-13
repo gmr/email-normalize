@@ -1,5 +1,11 @@
 name: Testing
 on:
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - 'setup.*'
+      - '*.md'
+      - '*.rst'
   push:
     branches: ["*"]
     paths-ignore:
