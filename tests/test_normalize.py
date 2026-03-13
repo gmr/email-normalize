@@ -5,7 +5,6 @@ import warnings
 from unittest import mock
 
 import email_normalize
-from email_normalize import providers
 
 
 class TestCase(unittest.TestCase):
@@ -190,7 +189,6 @@ class MailboxProviderTestCase(TestCase):
 
 
 class SkipDNSTestCase(TestCase):
-
     def _normalize(self, address):
         return email_normalize.normalize(address, skip_dns=True)
 
@@ -299,8 +297,7 @@ class SkipDNSTestCase(TestCase):
 
     def test_async_normalizer(self):
         normalizer = email_normalize.Normalizer(skip_dns=True)
-        result = asyncio.run(
-            normalizer.normalize('u.s.e.r+tag@gmail.com'))
+        result = asyncio.run(normalizer.normalize('u.s.e.r+tag@gmail.com'))
         self.assertEqual(result.normalized_address, 'user@gmail.com')
         self.assertEqual(result.mailbox_provider, 'Google')
         self.assertListEqual(result.mx_records, [])

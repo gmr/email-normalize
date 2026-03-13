@@ -254,7 +254,6 @@ def normalize(
     """
 
     async def _normalize():
-        return await Normalizer(
-            skip_dns=skip_dns).normalize(email_address)
+        return await Normalizer(skip_dns=skip_dns).normalize(email_address)
 
     return asyncio.run(_normalize())
