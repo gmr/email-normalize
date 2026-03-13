@@ -31,12 +31,12 @@ class Apple(MailboxProvider):
 
 
 class Fastmail(MailboxProvider):
-    Flags = Rules.PLUS_ADDRESSING ^ Rules.LOCAL_PART_AS_HOSTNAME
+    Flags = Rules.PLUS_ADDRESSING | Rules.LOCAL_PART_AS_HOSTNAME
     MXDomains = frozenset({'messagingengine.com'})
 
 
 class Google(MailboxProvider):
-    Flags = Rules.PLUS_ADDRESSING ^ Rules.STRIP_PERIODS
+    Flags = Rules.PLUS_ADDRESSING | Rules.STRIP_PERIODS
     MXDomains = frozenset({'google.com', 'googlemail.com'})
 
 

@@ -9,6 +9,7 @@ jobs:
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags') && github.repository == 'gmr/email-normalize'
     environment: release
     permissions:
+      contents: read
       id-token: write
     steps:
       - name: Checkout repository
