@@ -7,14 +7,18 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags') && github.repository == 'gmr/email-normalize'
-    container: python:3.8-alpine
+    environment: release
+    permissions:
+      id-token: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v1
+        uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
       - name: Build package
-        run: python3 setup.py sdist
+        run: uv build
+
       - name: Publish package
-        uses: pypa/gh-action-pypi-publish@master
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_PASSWORD }}
+        uses: pypa/gh-action-pypi-publish@release/v1

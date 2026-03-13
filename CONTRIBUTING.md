@@ -3,12 +3,11 @@
 To get setup in the environment and run the tests, take the following steps:
 
 ```bash
-python3 -m venv env
-source env/bin/activate
-pip install -e '.[test]'
+uv sync --all-extras
+uv run pre-commit install
 
-flake8
-coverage run && coverage report
+uv run pre-commit run --all-files
+uv run coverage run && uv run coverage report
 ```
 
 ## Adding a Mailbox Provider
@@ -22,6 +21,6 @@ Set the flags in the new class appropriately and add tests.
 Pull requests that make changes or additions that are not covered by tests
 will likely be closed without review.
 
-In addition, all tests must pass the tests **AND** flake8 linter. If flake8
+In addition, all tests must pass the tests **AND** ruff linter. If ruff
 exceptions are included, the reasoning for adding the exception must be included
 in the pull request.

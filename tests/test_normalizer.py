@@ -11,7 +11,6 @@ import email_normalize
 
 
 class NormalizerTestCase(unittest.IsolatedAsyncioTestCase):
-
     def setUp(self) -> None:
         self.normalizer = email_normalize.Normalizer()
         email_normalize.cache.clear()
@@ -24,10 +23,11 @@ class NormalizerTestCase(unittest.IsolatedAsyncioTestCase):
         result = await resolver.query('gmail.com', 'MX')
         expectation = sorted(
             [(r.priority, r.host) for r in result],
-            key=operator.itemgetter(0, 1))
+            key=operator.itemgetter(0, 1),
+        )
         self.assertListEqual(
-            await self.normalizer.mx_records('gmail.com'),
-            expectation)
+            await self.normalizer.mx_records('gmail.com'), expectation
+        )
 
     async def test_cache(self):
         await self.normalizer.mx_records('gmail.com')
@@ -39,8 +39,8 @@ class NormalizerTestCase(unittest.IsolatedAsyncioTestCase):
             self.assertIsNone(email_normalize.cache['foo'])
 
     async def test_cache_max_size(self):
-        for offset in range(0, self.normalizer.cache_limit):
-            key = 'key-{}'.format(offset)
+        for offset in range(self.normalizer.cache_limit):
+            key = f'key-{offset}'
             email_normalize.cache[key] = email_normalize.CachedItem([], 60)
             email_normalize.cache[key].hits = 3
             email_normalize.cache[key].last_access = time.monotonic()
@@ -63,10 +63,14 @@ class NormalizerTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(email_normalize.cache['gmail.com'].expired)
         await self.normalizer.mx_records('gmail.com')
         self.assertGreater(
-            email_normalize.cache['gmail.com'].cached_at, cached_at)
+            email_normalize.cache['gmail.com'].cached_at, cached_at
+        )
 
     async def test_empty_mx_list(self):
-        with mock.patch.object(self.normalizer, 'mx_records') as mx_records:
+        with mock.patch.object(
+            self.normalizer,
+            'mx_records',
+        ) as mx_records:
             mx_records.return_value = []
             result = await self.normalizer.normalize('foo@bar.com')
             self.assertEqual(result.normalized_address, 'foo@bar.com')
@@ -86,10 +90,13 @@ class NormalizerTestCase(unittest.IsolatedAsyncioTestCase):
         self.assertListEqual(records, [])
 
     async def test_weird_mx_list(self):
-        with mock.patch.object(self.normalizer, 'mx_records') as recs:
+        with mock.patch.object(
+            self.normalizer,
+            'mx_records',
+        ) as recs:
             recs.return_value = [
                 (1, str(uuid.uuid4())),
-                (10, 'aspmx.l.google.com')
+                (10, 'aspmx.l.google.com'),
             ]
             result = await self.normalizer.normalize('f.o.o+bar@gmail.com')
             self.assertEqual(result.normalized_address, 'foo@gmail.com')

@@ -1,0 +1,113 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "email-normalize"
+version = "3.0.0"
+description = "Return a normalized email-address stripping ISP specific behaviors"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "BSD 3-Clause License" }
+urls = { Homepage = "https://github.com/gmr/email-normalize" }
+authors = [
+    { name = "Gavin M. Roy", email = "gavinmroy@gmail.com" }
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Framework :: AsyncIO",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Communications",
+    "Topic :: Communications :: Email",
+    "Topic :: Internet",
+    "Topic :: Software Development",
+    "Typing :: Typed",
+]
+dependencies = [
+    "aiodns",
+    "tldextract",
+]
+
+[project.optional-dependencies]
+dev = [
+    "coverage",
+    "pre-commit",
+    "ruff",
+]
+docs = [
+    "mkdocs",
+    "mkdocs-material",
+    "mkdocstrings[python]",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["email_normalize"]
+command_line = "-m unittest discover tests --buffer --verbose"
+
+[tool.coverage.report]
+exclude_also = [
+    "typing.TYPE_CHECKING",
+]
+show_missing = true
+
+[tool.coverage.html]
+directory = "build/coverage"
+
+[tool.coverage.xml]
+output = "build/coverage.xml"
+
+[tool.hatch.build]
+artifacts = [
+    "email_normalize",
+]
+
+[tool.hatch.build.targets.wheel]
+include = [
+    "email_normalize",
+]
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.ruff.lint]
+select = [
+    "BLE",      # flake8-blind-except
+    "C4",       # flake8-comprehensions
+    "C90",      # mccabe
+    "E", "W",   # pycodestyle
+    "F",        # pyflakes
+    "G",        # flake8-logging-format
+    "I",        # isort
+    "N",        # pep8-naming
+    "Q",        # flake8-quotes
+    "S",        # flake8-bandit
+    "ASYNC",    # flake8-async
+    "B",        # flake8-bugbear
+    "DTZ",      # flake8-datetimez
+    "FURB",     # refurb
+    "RUF",      # ruff-specific
+    "T20",      # flake8-print
+    "UP",       # pyupgrade
+]
+ignore = [
+    "N818",     # exception name should end in Error
+    "RSE",      # contradicts Python Style Guide
+    "UP040",    # type alias uses TypeAlias
+]
+flake8-quotes = { inline-quotes = "single" }
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
