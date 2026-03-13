@@ -33,10 +33,17 @@ print(result.mx_records)          # [(5, 'gmail-smtp-in.l.google.com'), ...]
 For use within an asyncio application, use the `Normalizer` class directly:
 
 ```python
+import asyncio
+
 import email_normalize
 
-normalizer = email_normalize.Normalizer()
-result = await normalizer.normalize('f.o.o+bar@gmail.com')
+
+async def main():
+    normalizer = email_normalize.Normalizer()
+    result = await normalizer.normalize('f.o.o+bar@gmail.com')
+    print(result.normalized_address)
+
+asyncio.run(main())
 ```
 
 The `Normalizer` maintains a LFRU cache of MX lookups, making it efficient
