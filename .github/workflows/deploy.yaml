@@ -10,9 +10,10 @@ jobs:
 
     environment:
       name: pypi
-      url: https://pypi.org/p/email-normalize
+      url: https://pypi.org/project/email-normalize/
 
     permissions:
+      contents: read
       id-token: write
 
     steps:
