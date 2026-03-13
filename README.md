@@ -1,7 +1,7 @@
 # email-normalize
 
-`email-normalize` is a Python 3 library for returning a normalized email-address
-stripping mailbox provider specific behaviors such as "Plus addressing"
+`email-normalize` is a Python 3.11+ library for returning a normalized email-address
+stripping mailbox-provider-specific behaviors such as "Plus addressing"
 (foo+bar@gmail.com).
 
 ![Version](https://img.shields.io/pypi/v/email-normalize.svg?)
