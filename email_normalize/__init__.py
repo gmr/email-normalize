@@ -24,6 +24,10 @@ LOGGER = logging.getLogger(__name__)
 
 MXRecords = list[tuple[int, str]]
 
+_tld_extract = tldextract.TLDExtract(
+    suffix_list_urls=(), cache_dir=None, fallback_to_snapshot=True
+)
+
 cache: dict[str, 'CachedItem'] = {}
 
 
@@ -190,7 +194,7 @@ class Normalizer:
         local_part: str,
         domain_part: str,
     ) -> tuple[str, str]:
-        extracted = tldextract.extract(domain_part)
+        extracted = _tld_extract(domain_part)
         if extracted.subdomain:
             subdomain_parts = extracted.subdomain.split('.')
             local_part = subdomain_parts[0]
