@@ -1,35 +1,35 @@
-"""
-email-normalize
+"""email-normalize
 ===============
 
 Library for returning a normalized email-address stripping mailbox provider
 specific behaviors such as "Plus addressing" (foo+bar@gmail.com).
 
 """
+
 import asyncio
 import copy
 import dataclasses
 import logging
 import operator
 import time
-import typing
-import tldextract
 from email import utils
 
 import aiodns
+import tldextract
 from aiodns import error
 
 from email_normalize import providers
 
 LOGGER = logging.getLogger(__name__)
 
-MXRecords = typing.List[typing.Tuple[int, str]]
+MXRecords = list[tuple[int, str]]
 
-cache: typing.Dict[str, 'CachedItem'] = {}
+cache: dict[str, 'CachedItem'] = {}
 
 
 class CachedItem:
     """Used to represent a cached lookup for implementing a LFRU cache"""
+
     __slots__ = ['cached_at', 'hits', 'last_access', 'mx_records', 'ttl']
 
     def __init__(self, mx_records: MXRecords, ttl: int):
@@ -46,48 +46,23 @@ class CachedItem:
 
 @dataclasses.dataclass(frozen=True)
 class Result:
-    """Instances of the :class:`~email_normalize.Result` class contain data
-    from the email normalization process.
+    """Contains data from the email normalization process.
 
-    :param address: The address that was normalized
-    :type address: str
-    :param normalized_address: The normalized version of the address
-    :type normalized_address: str
-    :param mx_records: A list of tuples representing the priority and host of
-        the MX records found for the email address. If empty, indicates a
-        failure to lookup the domain part of the email address.
-    :type mx_records: :data:`~email_normalize.MXRecords`
-    :param mailbox_provider: String that represents the mailbox provider name
-        - is `None` if the mailbox provider could not be detected or
-        was unsupported.
-    :type mailbox_provider: str
-
-    .. note:: If during the normalization process the MX records could not be
-        resolved, the ``mx_records`` attribute will be an empty :class:`list`
-        and the ``mailbox_provider`` attribute will be :data:`None`.
-
-    **Example**
-
-    .. code-block:: python
-
-        @dataclasses.dataclass(frozen=True)
-        class Result:
-            address = 'Gavin.M.Roy+ignore-spam@gmail.com'
-            normalized_address = 'gavinmroy@gmail.com'
-            mx_records =     [
-                (5, 'gmail-smtp-in.l.google.com'),
-                (10, 'alt1.gmail-smtp-in.l.google.com'),
-                (20, 'alt2.gmail-smtp-in.l.google.com'),
-                (30, 'alt3.gmail-smtp-in.l.google.com'),
-                (40, 'alt4.gmail-smtp-in.l.google.com')
-            ]
-            mailbox_provider = 'Gmail'
+    Attributes:
+        address: The address that was normalized.
+        normalized_address: The normalized version of the address.
+        mx_records: A list of tuples representing the priority and host
+            of the MX records found for the email address. If empty,
+            indicates a failure to lookup the domain part.
+        mailbox_provider: The mailbox provider name, or ``None`` if
+            the provider could not be detected or was unsupported.
 
     """
+
     address: str
     normalized_address: str
     mx_records: MXRecords
-    mailbox_provider: typing.Optional[str] = None
+    mailbox_provider: str | None = None
 
 
 class Normalizer:
@@ -104,45 +79,39 @@ class Normalizer:
     the DNS TTL returned when performing MX lookups. Data is cached at the
     **module** level.
 
-    **Usage Example**
-
-    .. code-block:: python
-
-        async def normalize(email_address: str) -> email_normalize.Result:
-            normalizer = email_normalize.Normalizer()
-            return await normalizer.normalize('foo@bar.io')
-
-    :param name_servers: Optional list of hostnames to use for DNS resolution
-    :type name_servers: list(str) or None
-    :param int cache_limit: The maximum number of domain results that are
-        cached. Defaults to `1024`.
-
-    :param bool cache_failures: Toggle the behavior of caching DNS resolution
-        failures for a given domain. When enabled, failures will be cached
-        for `failure_ttl` seconds. Defaults to `True`.
-    :param int failure_ttl: Duration in seconds to cache DNS failures. Only
-        works when `cache_failures` is set to `True`. Defaults to `300`
-        seconds.
+    Args:
+        name_servers: Optional list of hostnames to use for DNS
+            resolution.
+        cache_limit: The maximum number of domain results that are
+            cached. Defaults to ``1024``.
+        cache_failures: Toggle the behavior of caching DNS resolution
+            failures for a given domain. When enabled, failures will be
+            cached for ``failure_ttl`` seconds. Defaults to ``True``.
+        failure_ttl: Duration in seconds to cache DNS failures. Only
+            works when ``cache_failures`` is set to ``True``. Defaults
+            to ``300`` seconds.
 
     """
 
-    def __init__(self,
-                 name_servers: typing.Optional[typing.List[str]] = None,
-                 cache_limit: int = 1024,
-                 cache_failures: bool = True,
-                 failure_ttl: int = 300) -> 'Normalizer':
+    def __init__(
+        self,
+        name_servers: list[str] | None = None,
+        cache_limit: int = 1024,
+        cache_failures: bool = True,
+        failure_ttl: int = 300,
+    ) -> None:
         self._resolver = aiodns.DNSResolver(name_servers)
         self.cache_failures = cache_failures
         self.cache_limit = cache_limit
         self.failure_ttl = failure_ttl
 
     async def mx_records(self, domain_part: str) -> MXRecords:
-        """Resolve MX records for a domain returning a list of tuples with the
-        MX priority and value.
+        """Resolve MX records for a domain.
 
-        :param domain_part: The domain to resolve MX records for
-        :type domain_part: str
-        :rtype:  :data:`~email_normalize.MXRecords`
+        Returns a list of tuples with the MX priority and value.
+
+        Args:
+            domain_part: The domain to resolve MX records for.
 
         """
         if self._skip_cache(domain_part):
@@ -155,35 +124,36 @@ class Normalizer:
                 mx_records, ttl = [], self.failure_ttl
             else:
                 mx_records = [(r.priority, r.host) for r in records]
-                ttl = min((r.ttl for r in records if r.ttl >= 0),
-                          default=self.failure_ttl)
+                ttl = min(
+                    (r.ttl for r in records if r.ttl >= 0),
+                    default=self.failure_ttl,
+                )
 
-            # Prune the cache if over the limit, finding least used, oldest
+            # Prune the cache if over the limit
             if len(cache.keys()) >= self.cache_limit:
                 key_to_prune = sorted(
-                    cache.items(), key=lambda i: (
-                        i[1].hits, i[1].last_access))[0][0]
+                    cache.items(), key=lambda i: (i[1].hits, i[1].last_access)
+                )[0][0]
                 LOGGER.debug('Pruning cache of %s', key_to_prune)
                 del cache[key_to_prune]
 
             cache[domain_part] = CachedItem(
-                sorted(mx_records, key=operator.itemgetter(0, 1)), ttl)
+                sorted(mx_records, key=operator.itemgetter(0, 1)), ttl
+            )
 
         cache[domain_part].hits += 1
         cache[domain_part].last_access = time.monotonic()
         return copy.deepcopy(cache[domain_part].mx_records)
 
     async def normalize(self, email_address: str) -> Result:
-        """Return a :class:`~email_normalize.Result` instance containing the
-        original address, the normalized address, the MX records found, and
-        the detected mailbox provider.
+        """Normalize an email address.
 
-        .. note:: If the MX records could not be resolved, the ``mx_records``
-            attribute of the result will be an empty :class:`list` and the
-            ``mailbox_provider`` will be :data:`None`.
+        Returns a ``Result`` containing the original address, the
+        normalized address, the MX records found, and the detected
+        mailbox provider.
 
-        :param email_address: The address to normalize
-        :rtype: :class:`~email_normalize.Result`
+        Args:
+            email_address: The address to normalize.
 
         """
         address = utils.parseaddr(email_address)
@@ -193,52 +163,54 @@ class Normalizer:
         if provider:
             if provider.Flags & providers.Rules.LOCAL_PART_AS_HOSTNAME:
                 local_part, domain_part = self._local_part_as_hostname(
-                    local_part, domain_part)
+                    local_part, domain_part
+                )
             if provider.Flags & providers.Rules.STRIP_PERIODS:
                 local_part = local_part.replace('.', '')
             if provider.Flags & providers.Rules.PLUS_ADDRESSING:
                 local_part = local_part.split('+')[0]
-        return Result(email_address, '@'.join([local_part, domain_part]),
-                      mx_records, provider.__name__ if provider else None)
+        return Result(
+            email_address,
+            f'{local_part}@{domain_part}',
+            mx_records,
+            provider.__name__ if provider else None,
+        )
 
     @staticmethod
-    def _local_part_as_hostname(local_part: str,
-                                domain_part: str) -> typing.Tuple[str, str]:
-        # Use tldextract to properly parse the domain
+    def _local_part_as_hostname(
+        local_part: str,
+        domain_part: str,
+    ) -> tuple[str, str]:
         extracted = tldextract.extract(domain_part)
-
-        # If there's a subdomain, use the first part of the subdomain as the local part
-        # and the rest (domain + suffix) as the domain part
         if extracted.subdomain:
             subdomain_parts = extracted.subdomain.split('.')
             local_part = subdomain_parts[0]
-
-            # Reconstruct domain_part: remaining subdomain parts + domain + suffix
-            remaining_subdomain = '.'.join(subdomain_parts[1:]) if len(subdomain_parts) > 1 else ''
-            domain_name = extracted.domain
-            suffix = extracted.suffix
-
-            # Build the new domain part
-            domain_part_components = []
-            if remaining_subdomain:
-                domain_part_components.append(remaining_subdomain)
-            if domain_name:
-                domain_part_components.append(domain_name)
-            if suffix:
-                domain_part_components.append(suffix)
-
-            domain_part = '.'.join(domain_part_components)
+            remaining = (
+                '.'.join(subdomain_parts[1:])
+                if len(subdomain_parts) > 1
+                else ''
+            )
+            components = []
+            if remaining:
+                components.append(remaining)
+            if extracted.domain:
+                components.append(extracted.domain)
+            if extracted.suffix:
+                components.append(extracted.suffix)
+            domain_part = '.'.join(components)
         return local_part, domain_part
 
     @staticmethod
-    def _lookup_provider(mx_records: typing.List[typing.Tuple[int, str]]) \
-            -> typing.Optional[providers.MailboxProvider]:
-        for priority, host in mx_records:
+    def _lookup_provider(
+        mx_records: list[tuple[int, str]],
+    ) -> providers.MailboxProvider | None:
+        for _priority, host in mx_records:
             lchost = host.lower()
             for provider in providers.Providers:
                 for domain in provider.MXDomains:
                     if lchost.endswith(domain):
                         return provider
+        return None
 
     def _skip_cache(self, domain: str) -> bool:
         if domain not in cache:
@@ -250,28 +222,19 @@ class Normalizer:
 
 
 def normalize(email_address: str) -> Result:
-    """Normalize an email address
+    """Normalize an email address.
 
-    This method abstracts the :mod:`asyncio` base for this library and
-    provides a blocking function. If you intend to use this library as part of
-    an :mod:`asyncio` based application, it is recommended that you use
-    the :meth:`~email_normalize.Normalizer.normalize` instead.
+    This function abstracts the asyncio base for this library and
+    provides a blocking interface. If you intend to use this library
+    as part of an asyncio-based application, use
+    ``Normalizer.normalize`` instead.
 
-    .. note:: If the MX records could not be resolved, the ``mx_records``
-        attribute of the result will be an empty :class:`list` and the
-        ``mailbox_provider`` attribute will be :data:`None`.
-
-    **Usage Example**
-
-    .. code-block:: python
-
-        import email_normalize
-
-        result = email_normalize.normalize('foo@bar.io')
-
-    :param email_address: The address to normalize
+    Args:
+        email_address: The address to normalize.
 
     """
+
     async def _normalize():
         return await Normalizer().normalize(email_address)
+
     return asyncio.run(_normalize())

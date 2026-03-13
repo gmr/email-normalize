@@ -51,9 +51,8 @@ coverage.xml
 *.log
 *.pot
 
-# Sphinx documentation
-docs/_build/
+# Documentation
+site/
 
 .idea
 .vagrant
-
