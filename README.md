@@ -67,7 +67,7 @@ custom domains.
 |------------|:---------------:|:-------------:|:----------------------:|
 | Apple      | x               |               |                        |
 | Fastmail   | x               |               | x                      |
-| Google     | x               | x             |                        |
+| Google     | x               | x*            |                        |
 | Microsoft  | x               |               |                        |
 | ProtonMail | x               |               |                        |
 | Rackspace  | x               |               |                        |
@@ -78,6 +78,11 @@ custom domains.
 - **Plus Addressing**: Strips everything after `+` in the local part
 - **Strip Periods**: Removes `.` from the local part
 - **Local Part as Hostname**: Extracts the subdomain as the local part (Fastmail custom domains)
+
+\* Google strips periods only for consumer Gmail addresses (`gmail.com` and
+`googlemail.com`). Google Workspace custom domains route through the same MX
+servers but treat periods as significant, so periods are preserved for them
+(plus addressing is still stripped).
 
 ## Documentation
 

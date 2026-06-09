@@ -24,6 +24,13 @@ class MailboxProvider:
     Flags: typing.ClassVar[Rules]
     MXDomains: typing.ClassVar[frozenset[str]]
 
+    # Domains for which ``Rules.STRIP_PERIODS`` should be applied. Period
+    # stripping is only correct for a provider's consumer domains, not for
+    # custom domains that happen to route mail through the same MX servers
+    # (e.g. Google Workspace). An empty set means period stripping applies
+    # to every domain matched to the provider.
+    StripPeriodDomains: typing.ClassVar[frozenset[str]] = frozenset()
+
 
 class Apple(MailboxProvider):
     Flags = Rules.PLUS_ADDRESSING
@@ -38,6 +45,9 @@ class Fastmail(MailboxProvider):
 class Google(MailboxProvider):
     Flags = Rules.PLUS_ADDRESSING | Rules.STRIP_PERIODS
     MXDomains = frozenset({'google.com', 'googlemail.com'})
+    # Only consumer Gmail strips dots; Google Workspace custom domains do
+    # not. See https://support.google.com/mail/answer/7436150.
+    StripPeriodDomains = frozenset({'gmail.com', 'googlemail.com'})
 
 
 class Microsoft(MailboxProvider):
