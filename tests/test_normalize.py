@@ -121,14 +121,39 @@ class MailboxProviderTestCase(TestCase):
             'Fastmail',
         )
 
-    def test_google(self):
+    def test_google_consumer_gmail(self):
+        """Consumer Gmail strips periods and plus addressing."""
+        local_part = str(uuid.uuid4()).replace('-', '.')
+        address = f'{local_part}+test@gmail.com'
+        mx_records = [(1, 'aspmx.l.google.com')]
+        self._perform_test(
+            address,
+            f'{local_part.replace(".", "")}@gmail.com',
+            mx_records,
+            'Google',
+        )
+
+    def test_google_consumer_googlemail(self):
+        """Consumer googlemail.com strips periods and plus addressing."""
+        local_part = str(uuid.uuid4()).replace('-', '.')
+        address = f'{local_part}+test@googlemail.com'
+        mx_records = [(1, 'aspmx.l.google.com')]
+        self._perform_test(
+            address,
+            f'{local_part.replace(".", "")}@googlemail.com',
+            mx_records,
+            'Google',
+        )
+
+    def test_google_workspace_preserves_periods(self):
+        """Google Workspace custom domains keep periods but strip plus."""
         local_part = str(uuid.uuid4()).replace('-', '.')
         domain_part = str(uuid.uuid4())
         address = f'{local_part}+test@{domain_part}'
         mx_records = [(1, 'aspmx.l.google.com')]
         self._perform_test(
             address,
-            f'{local_part.replace(".", "")}@{domain_part}',
+            f'{local_part}@{domain_part}',
             mx_records,
             'Google',
         )

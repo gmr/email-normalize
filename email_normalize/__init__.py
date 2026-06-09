@@ -178,7 +178,10 @@ class Normalizer:
                 local_part, domain_part = self._local_part_as_hostname(
                     local_part, domain_part
                 )
-            if provider.Flags & providers.Rules.STRIP_PERIODS:
+            if provider.Flags & providers.Rules.STRIP_PERIODS and (
+                not provider.StripPeriodDomains
+                or domain_part in provider.StripPeriodDomains
+            ):
                 local_part = local_part.replace('.', '')
             if provider.Flags & providers.Rules.PLUS_ADDRESSING:
                 local_part = local_part.split('+')[0]
