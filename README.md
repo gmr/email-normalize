@@ -63,26 +63,34 @@ custom domains.
 
 ## Normalization Rules
 
-| Provider   | Plus Addressing | Strip Periods | Local Part as Hostname |
-|------------|:---------------:|:-------------:|:----------------------:|
-| Apple      | x               |               |                        |
-| Fastmail   | x               |               | x                      |
-| Google     | x               | x*            |                        |
-| Microsoft  | x               |               |                        |
-| ProtonMail | x               |               |                        |
-| Rackspace  | x               |               |                        |
-| Yahoo      |                 |               |                        |
-| Yandex     | x               |               |                        |
-| Zoho       | x               |               |                        |
+| Provider   | Plus Addressing | Strip Periods | Local Part as Hostname | Domain Folding |
+|------------|:---------------:|:-------------:|:----------------------:|:--------------:|
+| Apple      | x               |               |                        | x†             |
+| Fastmail   | x               |               | x                      |                |
+| Google     | x               | x*            |                        | x†             |
+| Microsoft  | x               |               |                        |                |
+| ProtonMail | x               |               |                        |                |
+| Rackspace  | x               |               |                        |                |
+| Yahoo      |                 |               |                        |                |
+| Yandex     | x               |               |                        |                |
+| Zoho       | x               |               |                        |                |
 
 - **Plus Addressing**: Strips everything after `+` in the local part
 - **Strip Periods**: Removes `.` from the local part
 - **Local Part as Hostname**: Extracts the subdomain as the local part (Fastmail custom domains)
+- **Domain Folding**: Rewrites provider alias domains to a single canonical domain
 
 \* Google strips periods only for consumer Gmail addresses (`gmail.com` and
 `googlemail.com`). Google Workspace custom domains route through the same MX
 servers but treat periods as significant, so periods are preserved for them
 (plus addressing is still stripped).
+
+† Some providers deliver one mailbox under several domain names. These alias
+domains are folded to a single canonical form so the same mailbox always
+normalizes to the same address: Google's `googlemail.com` → `gmail.com`, and
+Apple's `me.com` and `mac.com` → `icloud.com`. Domains that share a provider
+but are *separate* mailboxes (e.g. Microsoft's `outlook.com`/`hotmail.com`, or
+Yahoo's `yahoo.com`/`aol.com`) are intentionally left unchanged.
 
 ## Documentation
 
