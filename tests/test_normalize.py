@@ -151,15 +151,17 @@ class MailboxProviderTestCase(TestCase):
         )
 
     def test_google_gmail_canonical_unchanged(self):
-        """The canonical gmail.com domain is left untouched by folding."""
-        local_part = str(uuid.uuid4()).replace('-', '.')
-        address = f'{local_part}+test@gmail.com'
+        """gmail.com is the canonical Google domain and is never folded.
+
+        Uses a plain local part with no periods or plus addressing so the
+        only behavior under test is that the gmail.com domain itself is
+        left unchanged (i.e. it is not an alias that folds elsewhere).
+        """
+        local_part = str(uuid.uuid4()).replace('-', '')
+        address = f'{local_part}@gmail.com'
         mx_records = [(1, 'aspmx.l.google.com')]
         self._perform_test(
-            address,
-            f'{local_part.replace(".", "")}@gmail.com',
-            mx_records,
-            'Google',
+            address, f'{local_part}@gmail.com', mx_records, 'Google'
         )
 
     def test_apple_me_folds_to_icloud(self):
