@@ -134,15 +134,78 @@ class MailboxProviderTestCase(TestCase):
         )
 
     def test_google_consumer_googlemail(self):
-        """Consumer googlemail.com strips periods and plus addressing."""
+        """googlemail.com strips periods/plus and folds to gmail.com.
+
+        googlemail.com is an alias domain for consumer Gmail; both
+        deliver to the same mailbox, so the domain is canonicalized to
+        gmail.com.
+        """
         local_part = str(uuid.uuid4()).replace('-', '.')
         address = f'{local_part}+test@googlemail.com'
         mx_records = [(1, 'aspmx.l.google.com')]
         self._perform_test(
             address,
-            f'{local_part.replace(".", "")}@googlemail.com',
+            f'{local_part.replace(".", "")}@gmail.com',
             mx_records,
             'Google',
+        )
+
+    def test_google_gmail_canonical_unchanged(self):
+        """gmail.com is the canonical Google domain and is never folded.
+
+        Uses a plain local part with no periods or plus addressing so the
+        only behavior under test is that the gmail.com domain itself is
+        left unchanged (i.e. it is not an alias that folds elsewhere).
+        """
+        local_part = str(uuid.uuid4()).replace('-', '')
+        address = f'{local_part}@gmail.com'
+        mx_records = [(1, 'aspmx.l.google.com')]
+        self._perform_test(
+            address, f'{local_part}@gmail.com', mx_records, 'Google'
+        )
+
+    def test_apple_me_folds_to_icloud(self):
+        """me.com is an Apple alias domain and folds to icloud.com."""
+        local_part = str(uuid.uuid4())
+        address = f'{local_part}+test@me.com'
+        mx_records = [(10, 'mx01.mail.icloud.com')]
+        self._perform_test(
+            address, f'{local_part}@icloud.com', mx_records, 'Apple'
+        )
+
+    def test_apple_mac_folds_to_icloud(self):
+        """mac.com is an Apple alias domain and folds to icloud.com."""
+        local_part = str(uuid.uuid4())
+        address = f'{local_part}+test@mac.com'
+        mx_records = [(10, 'mx01.mail.icloud.com')]
+        self._perform_test(
+            address, f'{local_part}@icloud.com', mx_records, 'Apple'
+        )
+
+    def test_apple_icloud_canonical_unchanged(self):
+        """The canonical icloud.com domain is left untouched by folding."""
+        local_part = str(uuid.uuid4())
+        address = f'{local_part}+test@icloud.com'
+        mx_records = [(10, 'mx01.mail.icloud.com')]
+        self._perform_test(
+            address, f'{local_part}@icloud.com', mx_records, 'Apple'
+        )
+
+    def test_apple_me_preserves_periods_when_folding(self):
+        """Apple keeps periods (no STRIP_PERIODS) while folding domain."""
+        address = 'first.last+tag@me.com'
+        mx_records = [(10, 'mx01.mail.icloud.com')]
+        self._perform_test(
+            address, 'first.last@icloud.com', mx_records, 'Apple'
+        )
+
+    def test_microsoft_hotmail_not_folded(self):
+        """Microsoft consumer domains are distinct mailboxes, not folded."""
+        local_part = str(uuid.uuid4())
+        address = f'{local_part}+test@hotmail.com'
+        mx_records = [(10, 'hotmail-com.olc.protection.outlook.com')]
+        self._perform_test(
+            address, f'{local_part}@hotmail.com', mx_records, 'Microsoft'
         )
 
     def test_google_workspace_preserves_periods(self):
@@ -302,6 +365,26 @@ class SkipDNSTestCase(TestCase):
         self.assertEqual(result.normalized_address, 'user@gmail.com')
         self.assertEqual(result.mailbox_provider, 'Google')
 
+    def test_googlemail_folds_to_gmail(self):
+        result = self._normalize('u.s.e.r+tag@googlemail.com')
+        self.assertEqual(result.normalized_address, 'user@gmail.com')
+        self.assertEqual(result.mailbox_provider, 'Google')
+
+    def test_me_folds_to_icloud(self):
+        result = self._normalize('user+tag@me.com')
+        self.assertEqual(result.normalized_address, 'user@icloud.com')
+        self.assertEqual(result.mailbox_provider, 'Apple')
+
+    def test_mac_folds_to_icloud(self):
+        result = self._normalize('user+tag@mac.com')
+        self.assertEqual(result.normalized_address, 'user@icloud.com')
+        self.assertEqual(result.mailbox_provider, 'Apple')
+
+    def test_hotmail_not_folded(self):
+        result = self._normalize('user+tag@hotmail.com')
+        self.assertEqual(result.normalized_address, 'user@hotmail.com')
+        self.assertEqual(result.mailbox_provider, 'Microsoft')
+
     def test_microsoft_plus_addressing(self):
         result = self._normalize('user+tag@outlook.com')
         self.assertEqual(result.normalized_address, 'user@outlook.com')
@@ -326,3 +409,35 @@ class SkipDNSTestCase(TestCase):
         self.assertEqual(result.normalized_address, 'user@gmail.com')
         self.assertEqual(result.mailbox_provider, 'Google')
         self.assertListEqual(result.mx_records, [])
+
+
+class CanonicalEquivalenceTestCase(TestCase):
+    """Aliased addresses for the same mailbox share a canonical form."""
+
+    @staticmethod
+    def _norm(address):
+        return email_normalize.normalize(
+            address, skip_dns=True
+        ).normalized_address
+
+    def test_gmail_and_googlemail_collapse(self):
+        gmail = self._norm('f.o.o+alpha@gmail.com')
+        googlemail = self._norm('f.o.o+beta@googlemail.com')
+        self.assertEqual(gmail, 'foo@gmail.com')
+        self.assertEqual(gmail, googlemail)
+
+    def test_icloud_me_mac_collapse(self):
+        icloud = self._norm('sample+a@icloud.com')
+        me = self._norm('sample+b@me.com')
+        mac = self._norm('sample+c@mac.com')
+        self.assertEqual(icloud, 'sample@icloud.com')
+        self.assertEqual(icloud, me)
+        self.assertEqual(icloud, mac)
+
+    def test_distinct_microsoft_domains_do_not_collapse(self):
+        """Microsoft consumer domains are separate mailboxes."""
+        hotmail = self._norm('sample+a@hotmail.com')
+        outlook = self._norm('sample+b@outlook.com')
+        self.assertEqual(hotmail, 'sample@hotmail.com')
+        self.assertEqual(outlook, 'sample@outlook.com')
+        self.assertNotEqual(hotmail, outlook)

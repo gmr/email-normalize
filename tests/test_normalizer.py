@@ -89,6 +89,23 @@ class NormalizerTestCase(unittest.IsolatedAsyncioTestCase):
         records = await self.normalizer.mx_records(key)
         self.assertListEqual(records, [])
 
+    async def test_e2e_googlemail_folds_to_gmail(self):
+        result = await self.normalizer.normalize('f.o.o+bar@googlemail.com')
+        self.assertEqual(result.normalized_address, 'foo@gmail.com')
+        self.assertEqual(result.mailbox_provider, 'Google')
+
+    async def test_e2e_me_folds_to_icloud(self):
+        result = await self.normalizer.normalize('sample+bar@me.com')
+        self.assertEqual(result.normalized_address, 'sample@icloud.com')
+        self.assertEqual(result.mailbox_provider, 'Apple')
+
+    async def test_e2e_gmail_googlemail_equivalent(self):
+        gmail = await self.normalizer.normalize('f.o.o+a@gmail.com')
+        googlemail = await self.normalizer.normalize('f.o.o+b@googlemail.com')
+        self.assertEqual(
+            gmail.normalized_address, googlemail.normalized_address
+        )
+
     async def test_weird_mx_list(self):
         with mock.patch.object(
             self.normalizer,

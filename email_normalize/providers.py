@@ -1,6 +1,8 @@
 """Provider Specific Rules"""
 
+import collections.abc
 import enum
+import types
 import typing
 
 
@@ -31,10 +33,26 @@ class MailboxProvider:
     # to every domain matched to the provider.
     StripPeriodDomains: typing.ClassVar[frozenset[str]] = frozenset()
 
+    # Map of alias domains to the provider's canonical domain. Alias
+    # domains deliver to the same mailbox as their canonical target
+    # (e.g. Apple's me.com/mac.com and icloud.com), so the domain part is
+    # folded to the canonical form during normalization. This is only
+    # correct for a provider's own consumer alias domains, never for
+    # custom domains that merely share the same MX servers. An empty
+    # mapping means no domain folding is performed.
+    CanonicalDomains: typing.ClassVar[collections.abc.Mapping[str, str]] = (
+        types.MappingProxyType({})
+    )
+
 
 class Apple(MailboxProvider):
     Flags = Rules.PLUS_ADDRESSING
     MXDomains = frozenset({'icloud.com'})
+    # me.com and mac.com are legacy alias domains for the same iCloud
+    # mailbox. See https://support.apple.com/en-us/118230.
+    CanonicalDomains = types.MappingProxyType(
+        {'me.com': 'icloud.com', 'mac.com': 'icloud.com'}
+    )
 
 
 class Fastmail(MailboxProvider):
@@ -48,6 +66,10 @@ class Google(MailboxProvider):
     # Only consumer Gmail strips dots; Google Workspace custom domains do
     # not. See https://support.google.com/mail/answer/7436150.
     StripPeriodDomains = frozenset({'gmail.com', 'googlemail.com'})
+    # googlemail.com is an alias domain for consumer Gmail; it delivers to
+    # the same mailbox as gmail.com. See
+    # https://support.google.com/mail/answer/10313.
+    CanonicalDomains = types.MappingProxyType({'googlemail.com': 'gmail.com'})
 
 
 class Microsoft(MailboxProvider):

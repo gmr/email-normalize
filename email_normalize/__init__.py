@@ -185,6 +185,9 @@ class Normalizer:
                 local_part = local_part.replace('.', '')
             if provider.Flags & providers.Rules.PLUS_ADDRESSING:
                 local_part = local_part.split('+')[0]
+            domain_part = provider.CanonicalDomains.get(
+                domain_part, domain_part
+            )
         return Result(
             email_address,
             f'{local_part}@{domain_part}',
